@@ -39,6 +39,13 @@ namespace FFmpegOut
             set { _frameRate = value; }
         }
 
+        [SerializeField] bool _recordAudio = false;
+
+        public bool recordAudio {
+            get { return _recordAudio; }
+            set { _recordAudio = value; }
+        }
+
         #endregion
 
         #region Private members
@@ -126,6 +133,11 @@ namespace FFmpegOut
             }
         }
 
+        void OnAudioFilterRead(float[] buffer, int channels) {
+            if (_session == null || !_session.recordAudio) return;
+            _session.PushAudioBuffer(buffer, channels);
+        }
+
         void Update()
         {
             var camera = GetComponent<Camera>();
@@ -138,7 +150,7 @@ namespace FFmpegOut
                 // object to keep frames presented on the screen.
                 if (camera.targetTexture == null)
                 {
-                    _tempRT = new RenderTexture(_width, _height, 24, GetTargetFormat(camera)); 
+                    _tempRT = new RenderTexture(_width, _height, 24, GetTargetFormat(camera));
                     _tempRT.antiAliasing = GetAntiAliasingLevel(camera);
                     camera.targetTexture = _tempRT;
                     _blitter = Blitter.CreateInstance(camera);
@@ -149,7 +161,7 @@ namespace FFmpegOut
                     gameObject.name,
                     camera.targetTexture.width,
                     camera.targetTexture.height,
-                    _frameRate, preset
+                    _frameRate, preset, recordAudio
                 );
 
                 _startTime = Time.time;
